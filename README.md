@@ -53,3 +53,4 @@ docker compose up --build
 См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
 
 test
+"## P02: Workflow demonstration"
