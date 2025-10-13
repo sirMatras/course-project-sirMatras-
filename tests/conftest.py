@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os
 import sys
 import pathlib
@@ -67,3 +68,12 @@ def auth_headers(access_token: str):
     return {"Authorization": f"Bearer {access_token}"}
 
 
+=======
+# tests/conftest.py
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]  # корень репозитория
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+>>>>>>> 5c27983eb8f6a44084135ec5805e0671686a0d35

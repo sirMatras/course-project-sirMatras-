@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [tool.black]
 line-length = 100
 target-version = ["py312"]
@@ -34,3 +35,14 @@ dependencies = [
 ]
 
 
+=======
+[tool.ruff]
+line-length = 100
+select = ["E","F","W","I"]
+target-version = "py311"
+exclude = ["venv",".venv","build","dist"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+>>>>>>> 5c27983eb8f6a44084135ec5805e0671686a0d35
