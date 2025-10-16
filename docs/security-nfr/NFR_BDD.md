@@ -1,33 +1,33 @@
-# BDD Scenarios for Security NFR
+# BDD Сценарии для нефункциональных требований безопасности (Security NFR)
 
-## Feature: Secure password storage
+## Функция: Безопасное хранение пароля
 
-  Scenario: System hashes password with Argon2id
-    Given a user registers with email "test@example.com" and password "SecurePass123!"
-    When the registration request is processed
-    Then the stored password hash must use Argon2id with t=3, m=64MB, p=4
+  **Сценарий:** Система хэширует пароль с использованием Argon2id
+  **Дано:** Пользователь регистрируется с email "test@example.com" и паролем "SecurePass123!"
+  **Когда:** Запрос на регистрацию обрабатывается
+  **Тогда:** Сохранённый хэш пароля должен использовать Argon2id с параметрами t=3, m=64MB, p=4
 
-  Scenario: System rejects weak hashing algorithm
-    Given the auth module is misconfigured to use SHA1
-    When a security audit runs
-    Then the CI pipeline must fail with error "Weak hashing algorithm detected"
+  **Сценарий:** Система отклоняет использование слабого алгоритма хэширования
+  **Дано:** Модуль аутентификации неправильно настроен и использует SHA1
+  **Когда:** Проводится аудит безопасности
+  **Тогда:** CI-пайплайн должен завершиться ошибкой "Weak hashing algorithm detected"
 
-## Feature: Rate limiting protection
+## Функция: Защита от чрезмерных запросов (Rate limiting)
 
-  Scenario: Legitimate user stays within rate limit
-    Given a client sends 90 requests in 60 seconds
-    When each request is valid
-    Then all requests receive HTTP 200
+  **Сценарий:** Законный пользователь остаётся в пределах лимита
+  **Дано:** Клиент отправляет 90 запросов за 60 секунд
+  **Когда:** Каждый запрос является корректным
+  **Тогда:** Все запросы должны возвращать HTTP 200
 
-  Scenario: Brute-force attacker is blocked
-    Given a client sends 150 login requests in 60 seconds
-    When the requests contain invalid credentials
-    Then responses 101–150 must return HTTP 429
+  **Сценарий:** Брутфорс-атакующий блокируется
+  **Дано:** Клиент отправляет 150 запросов на вход за 60 секунд
+  **Когда:** Запросы содержат неверные учётные данные
+  **Тогда:** Ответы с 101-го по 150-й должны возвращать HTTP 429
 
-## Feature: JWT token expiration
+## Функция: Истечение срока действия JWT-токена
 
-  Scenario: Access token expires after 15 minutes
-    Given a user logs in and receives an access token
-    When 16 minutes pass
-    And the user uses the token to access /profile
-    Then the response must be HTTP 401 Unauthorized
+  **Сценарий:** Токен доступа истекает через 15 минут
+  **Дано:** Пользователь входит в систему и получает токен доступа
+  **Когда:** Проходит 16 минут
+  **И:** Пользователь использует токен для доступа к /profile
+  **Тогда:** Ответ должен быть HTTP 401 Unauthorized
