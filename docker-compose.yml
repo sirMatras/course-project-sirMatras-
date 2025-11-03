@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    environment:
+      - DATABASE_URL=sqlite:///./workout.db
+      - APP_ENV=production
+    volumes:
+      - ./src:/app/src
+      - workout-data:/app
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+volumes:
+  workout-data: {}
+
+

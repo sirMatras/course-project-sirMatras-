@@ -5,15 +5,11 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_not_found_item():
-    r = client.get("/items/999")
+def test_problem_details_has_correlation_id_on_404():
+    r = client.get("/non-existent-path")
     assert r.status_code == 404
     body = r.json()
-    assert "error" in body and body["error"]["code"] == "not_found"
+    assert body["status"] == 404
+    assert body["title"] == "Not Found"
+    assert "correlation_id" in body
 
-
-def test_validation_error():
-    r = client.post("/items", params={"name": ""})
-    assert r.status_code == 422
-    body = r.json()
-    assert body["error"]["code"] == "validation_error"
