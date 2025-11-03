@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+.venv/
+dist/
+build/
+
+=======
 # Python
 __pycache__/
 *.py[cod]
@@ -14,3 +24,4 @@ build/
 .idea/
 # OS
 .DS_Store
+>>>>>>> 5c27983eb8f6a44084135ec5805e0671686a0d35
