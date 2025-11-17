@@ -68,8 +68,8 @@
 ### C1. Dockerfile (multi-stage, размер) (★★2)
 
 **Dockerfile для своего сервиса:**
-- ✅ Multi-stage build с разделением build/runtime стадий
-- ✅ Образ оптимизирован под продакшн:
+- Multi-stage build с разделением build/runtime стадий
+- Образ оптимизирован под продакшн:
   - Минимальная база: `python:3.11-slim` (~150MB вместо ~900MB)
   - Кэш-слои: зависимости копируются отдельно от кода
   - Без лишних пакетов: только curl и ca-certificates для healthcheck
@@ -115,16 +115,16 @@ COPY tests/ ./tests/
 **Дополнительный hardening, адаптированный под сервис:**
 
 **Базовые меры:**
-- ✅ Non-root пользователь: `appuser` (UID=1000)
-- ✅ HEALTHCHECK настроен с таймаутами
-- ✅ Read-only монтирование где возможно (tmpfs для /tmp)
+- Non-root пользователь: `appuser` (UID=1000)
+- HEALTHCHECK настроен с таймаутами
+- Read-only монтирование где возможно (tmpfs для /tmp)
 
 **Дополнительный hardening:**
-- ✅ **Capabilities:** DROP ALL, добавлен только NET_BIND_SERVICE для привязки к порту 8000
-- ✅ **no-new-privileges:** `security_opt: no-new-privileges:true`
-- ✅ **AppArmor:** docker-default профиль
-- ✅ **tmpfs:** `/tmp:noexec,nosuid,size=100m` — предотвращает выполнение скриптов из /tmp
-- ✅ **Ulimits:** ограничение файловых дескрипторов и процессов
+- **Capabilities:** DROP ALL, добавлен только NET_BIND_SERVICE для привязки к порту 8000
+- **no-new-privileges:** `security_opt: no-new-privileges:true`
+- **AppArmor:** docker-default профиль
+- **tmpfs:** `/tmp:noexec,nosuid,size=100m` — предотвращает выполнение скриптов из /tmp
+- **Ulimits:** ограничение файловых дескрипторов и процессов
 
 **Доказательства:**
 
@@ -157,11 +157,11 @@ COPY tests/ ./tests/
 **Compose описывает зависимости реального приложения:**
 
 **Полный стек:**
-- ✅ **PostgreSQL:** production-подобная БД (postgres:16-alpine)
+- **PostgreSQL:** production-подобная БД (postgres:16-alpine)
   - Healthcheck для проверки готовности БД
   - Hardening настройки (cap_drop, no-new-privileges)
   - Volume для персистентности данных
-- ✅ **API сервис:** собственное контейнеризированное приложение
+- **API сервис:** собственное контейнеризированное приложение
   - Зависит от PostgreSQL (depends_on с condition: service_healthy)
   - Подключается к БД через сеть
   - Healthcheck для API endpoint
@@ -202,17 +202,17 @@ docker compose up -d --build
 **Настроены свои политики/исключения; регулярный запуск; отчёты сохраняются артефактами CI:**
 
 **Hadolint:**
-- ✅ Конфигурация: `.hadolint.yaml` с политиками игнорирования
-- ✅ Встроен в CI на каждый PR/push
-- ✅ Формат вывода: tty (человекочитаемый)
+- Конфигурация: `.hadolint.yaml` с политиками игнорирования
+- Встроен в CI на каждый PR/push
+- Формат вывода: tty (человекочитаемый)
 
 **Trivy:**
-- ✅ Политики исключений: `.trivyignore` для ложных срабатываний
-- ✅ Регулярный запуск: на каждый PR и push в main
-- ✅ Отчёты в двух форматах:
+- Политики исключений: `.trivyignore` для ложных срабатываний
+- Регулярный запуск: на каждый PR и push в main
+- Отчёты в двух форматах:
   - SARIF для GitHub Security Advisory
   - Table для человекочитаемого отчёта
-- ✅ **Артефакты CI:** отчёты сохраняются на 30 дней
+- **Артефакты CI:** отчёты сохраняются на 30 дней
   - `trivy-security-reports` (SARIF + table)
   - `docker-build-info` (docker history)
 
@@ -248,27 +248,20 @@ docker compose up -d --build
 **Собственный сервис контейнеризирован, запускается через docker compose; доступен по HTTP/CLI; есть интеграция с CI/CD:**
 
 **Контейнеризация:**
-- ✅ Собственный сервис Workout Log API полностью контейнеризирован
-- ✅ Dockerfile адаптирован под структуру проекта (`src/` директория)
-- ✅ Зависимости проекта: FastAPI, SQLAlchemy, Pydantic, JWT, Argon2
+- Собственный сервис Workout Log API полностью контейнеризирован
+- Dockerfile адаптирован под структуру проекта (`src/` директория)
+- Зависимости проекта: FastAPI, SQLAlchemy, Pydantic, JWT, Argon2
 
 **Запуск через docker compose:**
-- ✅ Полный стек: PostgreSQL + API
-- ✅ Автоматический запуск через `docker compose up`
-- ✅ Скрипт `scripts/run.sh` для удобства
+- Полный стек: PostgreSQL + API
+- Автоматический запуск через `docker compose up`
+- Скрипт `scripts/run.sh` для удобства
 
 **Доступность:**
-- ✅ Доступен по HTTP: `http://localhost:8000`
-- ✅ Healthcheck endpoint: `GET /health`
-- ✅ API документация: `GET /docs`
-- ✅ Работает через docker compose network
-
-**Интеграция с CI/CD:**
-- ✅ CI собирает образ при каждом PR/push
-- ✅ CI проверяет docker-compose запуск
-- ✅ CI проверяет healthcheck
-- ✅ CI сканирует образ на уязвимости
-- ✅ CI сохраняет артефакты (отчёты, docker history)
+- Доступен по HTTP: `http://localhost:8000`
+- Healthcheck endpoint: `GET /health`
+- API документация: `GET /docs`
+- Работает через docker compose network
 
 **Доказательства:**
 
@@ -289,12 +282,7 @@ docker compose up -d --build
    curl http://localhost:8000/docs  # Swagger UI
    ```
 
-3. **CI интеграция:**
-   - Workflow: [.github/workflows/ci.yml](.github/workflows/ci.yml)
-   - Job: `container-security` выполняет сборку, проверки, сканирование
-   - Артефакты доступны в CI после каждого run
-
-4. **Структура приложения:**
+3. **Структура приложения:**
    - Контейнеризировано приложение из `src/app/main.py`
    - Работает с PostgreSQL через SQLAlchemy
    - Аутентификация через JWT
