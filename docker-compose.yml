@@ -1,6 +1,35 @@
 version: "3.9"
 
 services:
+  # PostgreSQL для production-подобного окружения
+  postgres:
+    image: postgres:16-alpine
+    container_name: workout-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-workout_db}
+      POSTGRES_USER: ${POSTGRES_USER:-workout_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - workout-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-workout_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
   api:
     build:
       context: .
@@ -12,7 +41,7 @@ services:
       - "${API_PORT:-8000}:8000"
     environment:
       - PYTHONUNBUFFERED=1
-      - DATABASE_URL=${DATABASE_URL:-sqlite:///./workout.db}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-workout_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workout_db}}
       - APP_ENV=${APP_ENV:-production}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
@@ -22,7 +51,11 @@ services:
     env_file:
       - .env
     volumes:
-      - workout-data:/app/data
+      # Read-only монтирование для данных (если используется SQLite)
+      - workout-data:/app/data:rw
+    read_only: false  # false так как нужна запись в БД
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -31,11 +64,28 @@ services:
       start_period: 10s
     networks:
       - workout-network
-    # Проверка что контейнер не запущен под root
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Hardening контейнера
     security_opt:
       - no-new-privileges:true
+      - apparmor:docker-default
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE  # Для привязки к порту 8000
+    # Seccomp профиль (используется дефолтный)
+    # ulimits для ограничения ресурсов
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 2048
+      nproc: 512
 
 volumes:
+  postgres-data:
+    driver: local
   workout-data:
     driver: local
 
