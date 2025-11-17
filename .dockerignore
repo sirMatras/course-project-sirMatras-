@@ -1,17 +1,65 @@
+# Git
 .git
 .gitignore
 .gitattributes
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.sqlite
-*.db
+*.py[cod]
+*$py.class
+*.so
+.Python
 .venv/
+venv/
+ENV/
+env/
 dist/
 build/
+*.egg-info/
+.eggs/
+
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
-node_modules/
+.tox/
+.hypothesis/
+*.cover
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# CI/CD
+.github/
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Project specific
+*.sqlite
+*.db
+node_modules/
+htmlcov/
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+
+# PR descriptions (не нужны в образе)
+PR_DESCRIPTION*.md

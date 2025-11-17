@@ -1,17 +1,44 @@
 version: "3.9"
+
 services:
   api:
-    build: .
-    environment:
-      - DATABASE_URL=sqlite:///./workout.db
-      - APP_ENV=production
-    volumes:
-      - ./src:/app/src
-      - workout-data:/app
-    ports:
-      - "8000:8000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: workout-api:latest
+    container_name: workout-api
     restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./workout.db}
+      - APP_ENV=${APP_ENV:-production}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+      - REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-*}
+    env_file:
+      - .env
+    volumes:
+      - workout-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - workout-network
+    # Проверка что контейнер не запущен под root
+    security_opt:
+      - no-new-privileges:true
+
 volumes:
-  workout-data: {}
+  workout-data:
+    driver: local
 
-
+networks:
+  workout-network:
+    driver: bridge

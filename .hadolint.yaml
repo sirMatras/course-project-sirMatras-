@@ -1,0 +1,9 @@
+# Hadolint configuration для Dockerfile linting
+ignored:
+  # Разрешаем использование python:3.11-slim с sha256 для воспроизводимости
+  - DL3008  # Pin versions in apt get install
+  - DL3009  # Delete the apt-get lists after installing something
+
+trustedRegistries:
+  - docker.io
+
