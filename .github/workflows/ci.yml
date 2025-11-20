@@ -1,54 +1,20 @@
-<<<<<<< HEAD
 name: CI
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install black isort ruff pytest
-          pip install -r <(python - <<'PY'
-import tomllib
-with open('pyproject.toml','rb') as f:
-    data = tomllib.load(f)
-print('\n'.join(data['project']['dependencies']))
-PY
-)
-      - name: Lint
-        run: |
-          ruff check src
-          black --check src tests
-          isort --check-only src tests
-      - name: Tests
-        run: pytest -q
-
-
-=======
-name: CI
 on:
   pull_request:
   push:
     branches: [main]
+
 permissions:
   contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Обычные проверки кода
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,4 +40,131 @@ jobs:
 
       - name: Pre-commit (all files)
         run: pre-commit run --all-files
->>>>>>> 5c27983eb8f6a44084135ec5805e0671686a0d35
+
+  # P07: Проверки контейнера
+  container-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Линтинг Dockerfile с Hadolint
+      - name: Run Hadolint on Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+          format: tty
+        continue-on-error: false
+
+      # Сборка образа
+      - name: Build Docker image
+        run: |
+          docker build -t workout-api:test .
+
+      # Проверка что процесс не root
+      - name: Check non-root user
+        run: |
+          CONTAINER_ID=$(docker run -d workout-api:test)
+          USER_ID=$(docker exec $CONTAINER_ID id -u)
+          docker stop $CONTAINER_ID
+          docker rm $CONTAINER_ID
+          if [ "$USER_ID" -eq "0" ]; then
+            echo "ERROR: Container runs as root (UID=0)"
+            exit 1
+          else
+            echo "✓ Container runs as non-root user (UID=$USER_ID)"
+          fi
+
+      # Сканирование образа с Trivy
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: workout-api:test
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          trivyignores: '.trivyignore'
+
+      # Генерация отчёта Trivy в текстовом формате
+      - name: Generate Trivy table report
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image --format table --severity CRITICAL,HIGH \
+            --exit-code 0 workout-api:test > trivy-table.txt || true
+
+      # Публикация результатов Trivy в GitHub Security
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # Сохранение отчётов как артефакты CI
+      - name: Upload Trivy reports as artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-security-reports
+          path: |
+            trivy-results.sarif
+            trivy-table.txt
+          retention-days: 30
+
+      # Генерация отчёта docker history для анализа слоёв
+      - name: Generate docker history report
+        run: |
+          docker history workout-api:test --format "table {{.CreatedBy}}\t{{.Size}}" > docker-history.txt
+
+      # Сохранение docker history как артефакт
+      - name: Upload docker history as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-build-info
+          path: docker-history.txt
+          retention-days: 30
+
+      # Проверка размера образа
+      - name: Check image size
+        run: |
+          IMAGE_SIZE=$(docker images workout-api:test --format "{{.Size}}")
+          echo "Image size: $IMAGE_SIZE"
+          echo "IMAGE_SIZE=$IMAGE_SIZE" >> $GITHUB_ENV
+
+      # Проверка healthcheck
+      - name: Check healthcheck
+        run: |
+          CONTAINER_ID=$(docker run -d workout-api:test)
+          sleep 15
+          HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID || echo "none")
+          docker stop $CONTAINER_ID
+          docker rm $CONTAINER_ID
+          if [ "$HEALTH_STATUS" = "healthy" ] || [ "$HEALTH_STATUS" = "starting" ]; then
+            echo "✓ Healthcheck configured correctly (status: $HEALTH_STATUS)"
+          else
+            echo "WARNING: Healthcheck status: $HEALTH_STATUS"
+          fi
+
+      # Тестирование docker-compose
+      - name: Test docker-compose
+        run: |
+          docker compose config
+
+      # Проверка docker-compose запуска (build + up)
+      - name: Test docker-compose startup
+        run: |
+          docker compose up -d --build
+          sleep 20
+          # Проверка что контейнеры запустились
+          docker compose ps
+          # Проверка healthcheck
+          API_HEALTH=$(docker compose exec -T api curl -f http://localhost:8000/health || echo "failed")
+          if [ "$API_HEALTH" != "failed" ]; then
+            echo "✓ API healthcheck passed"
+          else
+            echo "ERROR: API healthcheck failed"
+            docker compose logs api
+            exit 1
+          fi
+          docker compose down -v

@@ -1,2 +1,8 @@
 fastapi==0.112.2
-uvicorn==0.30.5
+uvicorn[standard]==0.30.5
+sqlalchemy==2.0.36
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-jose[cryptography]==3.3.0
+passlib[argon2]==1.7.4
+psycopg2-binary==2.9.10
