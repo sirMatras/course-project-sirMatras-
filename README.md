@@ -29,6 +29,18 @@ pytest -q
 В репозитории настроен workflow **CI** (GitHub Actions) — required check для `main`.
 Badge добавится автоматически после загрузки шаблона в GitHub.
 
+## Безопасность и артефакты (P07–P09)
+
+- **P07 — Container security**: см. `PR_DESCRIPTION_P07.md` и workflow `ci.yml` (job `container-security`).
+- **P08 — CI/CD**: см. `PR_DESCRIPTION_P08.md` и общий workflow `ci.yml`.
+- **P09 — SBOM & SCA**:
+  - отдельный workflow `.github/workflows/sbom-sca.yml`;
+  - артефакты складываются в `EVIDENCE/P09/`:
+    - `sbom.json` — SBOM (Syft),
+    - `sca_report.json` — отчёт SCA (Grype),
+    - `sca_summary.md` — человекочитаемая сводка;
+  - политика работы с уязвимостями и waivers описана в `policy/waivers.yml`.
+
 ## Контейнеры
 ```bash
 docker build -t secdev-app .

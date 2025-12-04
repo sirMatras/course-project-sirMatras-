@@ -1,0 +1,100 @@
+name: SBOM & SCA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "Dockerfile"
+      - ".github/workflows/sbom-sca.yml"
+      - "policy/waivers.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "Dockerfile"
+      - ".github/workflows/sbom-sca.yml"
+      - "policy/waivers.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sbom-sca-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sbom-and-sca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare evidence directory
+        run: |
+          mkdir -p EVIDENCE/P09
+
+      # C1: Генерация SBOM с помощью Syft (фиксированная версия образа)
+      - name: Generate SBOM with Syft
+        run: |
+          docker run --rm \
+            -v "${PWD}:/project" \
+            anchore/syft:v0.104.0 \
+            dir:/project -o json=/project/EVIDENCE/P09/sbom.json
+
+      # C2: SCA с помощью Grype по сгенерированному SBOM
+      - name: Run SCA with Grype
+        run: |
+          docker run --rm \
+            -v "${PWD}:/project" \
+            anchore/grype:v0.80.0 \
+            sbom:/project/EVIDENCE/P09/sbom.json \
+            -o json > EVIDENCE/P09/sca_report.json
+
+      # C2: Агрегированная сводка по severity в Markdown
+      - name: Generate SCA summary
+        run: |
+          REPORT="EVIDENCE/P09/sca_report.json"
+          SUMMARY="EVIDENCE/P09/sca_summary.md"
+
+          if [ ! -f "$REPORT" ]; then
+            echo "SCA report not found: $REPORT"
+            exit 1
+          fi
+
+          echo "# SCA summary" > "$SUMMARY"
+          echo "" >> "$SUMMARY"
+          echo "- Commit: \`${GITHUB_SHA}\`" >> "$SUMMARY"
+          echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$SUMMARY"
+          echo "" >> "$SUMMARY"
+
+          echo "## Severity counts" >> "$SUMMARY"
+
+          for sev in CRITICAL HIGH MEDIUM LOW NEGLIGIBLE UNKNOWN; do
+            count=$(jq --arg s "$sev" '[.matches[].vulnerability | select(.severity == $s)] | length' "$REPORT" || echo "0")
+            echo "- ${sev}: ${count}" >> "$SUMMARY"
+          done
+
+          echo "" >> "$SUMMARY"
+          echo "## Notes" >> "$SUMMARY"
+          echo "- На этом этапе отчёт используется для обзора уязвимостей и планирования фиксов/waivers." >> "$SUMMARY"
+          echo "- Подробный JSON-отчёт лежит в \`sca_report.json\`, SBOM — в \`sbom.json\`." >> "$SUMMARY"
+
+      # C3: Публикация артефактов для DS1
+      - name: Upload SBOM & SCA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-sca-artifacts
+          path: |
+            EVIDENCE/P09/sbom.json
+            EVIDENCE/P09/sca_report.json
+            EVIDENCE/P09/sca_summary.md
+          retention-days: 30
+
+
