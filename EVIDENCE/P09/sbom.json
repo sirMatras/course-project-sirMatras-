@@ -1,0 +1,163 @@
+{
+  "artifacts": [
+    {
+      "id": "pkg:pypi/fastapi@0.112.2",
+      "name": "fastapi",
+      "version": "0.112.2",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/fastapi@0.112.2"
+    },
+    {
+      "id": "pkg:pypi/uvicorn@0.30.5",
+      "name": "uvicorn",
+      "version": "0.30.5",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/uvicorn@0.30.5"
+    },
+    {
+      "id": "pkg:pypi/sqlalchemy@2.0.36",
+      "name": "sqlalchemy",
+      "version": "2.0.36",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/sqlalchemy@2.0.36"
+    },
+    {
+      "id": "pkg:pypi/pydantic@2.9.2",
+      "name": "pydantic",
+      "version": "2.9.2",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/pydantic@2.9.2"
+    },
+    {
+      "id": "pkg:pypi/pydantic-settings@2.5.2",
+      "name": "pydantic-settings",
+      "version": "2.5.2",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/pydantic-settings@2.5.2"
+    },
+    {
+      "id": "pkg:pypi/python-jose@3.3.0",
+      "name": "python-jose",
+      "version": "3.3.0",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/python-jose@3.3.0"
+    },
+    {
+      "id": "pkg:pypi/passlib@1.7.4",
+      "name": "passlib",
+      "version": "1.7.4",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/passlib@1.7.4"
+    },
+    {
+      "id": "pkg:pypi/psycopg2-binary@2.9.10",
+      "name": "psycopg2-binary",
+      "version": "2.9.10",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/psycopg2-binary@2.9.10"
+    },
+    {
+      "id": "pkg:pypi/starlette@0.37.2",
+      "name": "starlette",
+      "version": "0.37.2",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/starlette@0.37.2"
+    },
+    {
+      "id": "pkg:pypi/typing-extensions@4.12.2",
+      "name": "typing-extensions",
+      "version": "4.12.2",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/typing-extensions@4.12.2"
+    },
+    {
+      "id": "pkg:pypi/cryptography@43.0.3",
+      "name": "cryptography",
+      "version": "43.0.3",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/cryptography@43.0.3"
+    },
+    {
+      "id": "pkg:pypi/httpx@0.27.2",
+      "name": "httpx",
+      "version": "0.27.2",
+      "type": "python",
+      "locations": [
+        {
+          "path": "requirements.txt"
+        }
+      ],
+      "purl": "pkg:pypi/httpx@0.27.2"
+    }
+  ],
+  "source": {
+    "type": "directory",
+    "target": {
+      "path": "/project"
+    }
+  },
+  "descriptor": {
+    "name": "syft",
+    "version": "1.0.0"
+  },
+  "schema": {
+    "version": "1.6.0",
+    "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-1.6.0.json"
+  }
+}
+

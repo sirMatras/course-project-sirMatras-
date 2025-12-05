@@ -45,7 +45,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${PWD}:/project" \
-            anchore/syft:v0.104.0 \
+            anchore/syft:v1.0.0 \
             dir:/project -o json=/project/EVIDENCE/P09/sbom.json
 
       # C2: SCA с помощью Grype по сгенерированному SBOM
@@ -53,7 +53,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${PWD}:/project" \
-            anchore/grype:v0.80.0 \
+            anchore/grype:v0.85.0 \
             sbom:/project/EVIDENCE/P09/sbom.json \
             -o json > EVIDENCE/P09/sca_report.json
 
