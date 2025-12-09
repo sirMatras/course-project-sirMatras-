@@ -1,0 +1,32 @@
+rules:
+  # Custom rule: prevent hardcoded secrets commonly used in auth
+  - id: python.hardcoded.jwt.secret
+    message: "Hardcoded secret key detected; store secrets in environment/config management."
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $KEY = "$SECRET"
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: "(SECRET_KEY|JWT_SECRET|API_KEY|TOKEN|AUTH_SECRET)"
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: "[A-Za-z0-9+/=_-]{12,}"
+    metadata:
+      category: security
+      technology: [fastapi, python]
+      references:
+        - https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html
+
+  # Custom rule: avoid disabling TLS validation in outgoing requests
+  - id: python.requests.verify.false
+    message: "Do not disable TLS verification (verify=False) in HTTP client calls."
+    severity: WARNING
+    languages: [python]
+    pattern: requests.$FUNC(..., verify=False, ...)
+    metadata:
+      category: security
+      technology: [python, requests]
+      references:
+        - https://owasp.org/www-project-top-ten/2017/A6_2017-Security_Misconfiguration.html
+

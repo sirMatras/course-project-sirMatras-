@@ -1,0 +1,14 @@
+title = "Course project gitleaks config (P10)"
+
+[allowlist]
+# Known non-secret strings and documentation paths to reduce false positives.
+regexes = [
+  '''Bearer <your_access_token>''',
+  '''dummy-(token|secret)''',
+  '''localhost:[0-9]{2,5}'''
+]
+paths = [
+  '''docs/.*''',
+  '''EVIDENCE/.*'''
+]
+
