@@ -1,0 +1,62 @@
+rules:
+  # Custom rule: prevent hardcoded secrets commonly used in auth
+  - id: python.hardcoded.jwt.secret
+    message: "Hardcoded secret key detected; store secrets in environment/config management."
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $KEY = "$SECRET"
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: "(SECRET_KEY|JWT_SECRET|API_KEY|TOKEN|AUTH_SECRET|PASSWORD|DB_PASSWORD|DATABASE_URL)"
+      - metavariable-regex:
+          metavariable: $SECRET
+          regex: "[A-Za-z0-9+/=_-]{12,}"
+    metadata:
+      category: security
+      technology: [fastapi, python]
+      references:
+        - https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html
+
+  # Custom rule: avoid disabling TLS validation in outgoing requests
+  - id: python.requests.verify.false
+    message: "Do not disable TLS verification (verify=False) in HTTP client calls."
+    severity: WARNING
+    languages: [python]
+    pattern: requests.$FUNC(..., verify=False, ...)
+    metadata:
+      category: security
+      technology: [python, requests]
+      references:
+        - https://owasp.org/www-project-top-ten/2017/A6_2017-Security_Misconfiguration.html
+
+  # Custom rule: detect SQL injection risks with string formatting
+  - id: python.sql.string.format
+    message: "Potential SQL injection: avoid string formatting in SQL queries. Use parameterized queries."
+    severity: WARNING
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: f"SELECT ... $QUERY ..."
+          - pattern: "SELECT ..." + $VAR + "..."
+          - pattern: "SELECT ... %s ..." % $VAR
+    metadata:
+      category: security
+      technology: [python, sqlalchemy, sql]
+      references:
+        - https://owasp.org/www-community/attacks/SQL_Injection
+
+  # Custom rule: detect unsafe deserialization (pickle)
+  - id: python.unsafe.pickle.load
+    message: "Unsafe deserialization detected: pickle.load can execute arbitrary code. Use safe alternatives like json."
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: pickle.load($ARG)
+      - pattern: pickle.loads($ARG)
+    metadata:
+      category: security
+      technology: [python]
+      references:
+        - https://owasp.org/www-community/vulnerabilities/Deserialization_of_untrusted_data
+

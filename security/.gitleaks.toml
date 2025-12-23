@@ -1,0 +1,58 @@
+title = "Course project gitleaks config (P10)"
+
+# Allowlist для известных безопасных строк и путей, чтобы снизить ложные срабатывания
+
+[allowlist]
+description = "Known non-secret strings and documentation paths"
+
+# Регулярные выражения для безопасных строк из документации и примеров
+regexes = [
+  # Документация API: примеры токенов в Swagger/OpenAPI
+  '''Bearer <your_access_token>''',
+  '''Bearer\s+<token>''',
+  # Тестовые/демо строки
+  '''dummy-(token|secret|key|password)''',
+  '''test-(token|secret|key|password)''',
+  '''example-(token|secret|key|password)''',
+  # Локальные адреса (не секреты)
+  '''localhost:[0-9]{2,5}''',
+  '''127\.0\.0\.1:[0-9]{2,5}''',
+  # Примеры конфигурации (не реальные секреты)
+  '''your-(api-key|secret-key|token|password)''',
+  '''replace-with-your-.*''',
+  # Стандартные значения для разработки
+  '''development|dev|test|staging''',
+]
+
+# Пути, которые исключаем из сканирования (документация, артефакты, примеры)
+paths = [
+  '''docs/.*''',           # Вся документация
+  '''EVIDENCE/.*''',        # Артефакты сканирований
+  '''\.git/.*''',          # Git метаданные
+  '''node_modules/.*''',   # Зависимости (если есть)
+  '''\.venv/.*''',         # Python виртуальное окружение
+  '''venv/.*''',           # Альтернативное имя venv
+  '''__pycache__/.*''',    # Python кэш
+  '''\.pytest_cache/.*''', # Pytest кэш
+  '''\.mypy_cache/.*''',   # MyPy кэш
+  '''\.ruff_cache/.*''',  # Ruff кэш
+  '''\.env\.example''',    # Примеры env файлов
+  '''\.env\.template''',   # Шаблоны env файлов
+  '''README\.md''',        # README файлы
+  '''SECURITY\.md''',      # Security policy
+  '''PR_DESCRIPTION.*\.md''', # Описания PR
+]
+
+# Комментарии к критичным типам секретов для нашего проекта
+# Мы считаем критичными:
+# 1. JWT секреты и токены аутентификации
+# 2. API ключи внешних сервисов
+# 3. Пароли БД и connection strings
+# 4. Приватные ключи SSH/GPG
+# 5. OAuth client secrets
+#
+# План работы с найденными секретами:
+# - Немедленно ротировать секреты, если они попали в git history
+# - Переместить в environment variables или secrets management (GitHub Secrets, Vault)
+# - Добавить в .gitignore паттерны для файлов с секретами
+# - Настроить pre-commit hook для проверки перед коммитом
