@@ -1,8 +1,26 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: secdev-app:latest
+    container_name: secdev-app
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"  # Bind to localhost only, not 0.0.0.0
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # Set to true if app doesn't need write access
+    tmpfs:
+      - /tmp
+      - /var/tmp
     profiles: ["dev"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

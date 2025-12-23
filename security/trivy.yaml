@@ -1,0 +1,45 @@
+# Trivy configuration for P12
+# Container image vulnerability scanning
+
+# Severity levels to report
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Exit code based on severity
+exit-code:
+  0  # Don't fail CI on findings (use continue-on-error in workflow)
+
+# Output format
+format: json
+
+# Ignore unfixed vulnerabilities
+ignore-unfixed: false
+
+# Security checks
+security-checks:
+  - vuln
+  - config
+  - secret
+
+# Ignore file (can be extended)
+ignorefile: .trivyignore
+
+# Timeout
+timeout: 5m
+
+# Cache directory
+cache-dir: /tmp/trivy-cache
+
+# No progress bar (for CI)
+no-progress: true
+
+# Skip database update (faster, but less accurate)
+skip-db-update: false
+
+# Skip Java DB update
+skip-java-db-update: false
+

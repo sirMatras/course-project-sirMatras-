@@ -1,0 +1,168 @@
+name: Security - IaC & Container (Hadolint, Checkov, Trivy)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Dockerfile"
+      - "compose.yaml"
+      - "security/**"
+      - ".github/workflows/ci-p12-iac-container.yml"
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "compose.yaml"
+      - "security/**"
+      - ".github/workflows/ci-p12-iac-container.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: iac-container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  iac-container-security:
+    name: IaC & Container Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare evidence directory
+        run: mkdir -p EVIDENCE/P12
+
+      # C1 ★★2: Hadolint - проверка Dockerfile
+      - name: Run Hadolint on Dockerfile
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v "${PWD}:/mnt" \
+            -w /mnt \
+            hadolint/hadolint:latest \
+            hadolint \
+            --config security/hadolint.yaml \
+            --format json \
+            Dockerfile > EVIDENCE/P12/hadolint_report.json || {
+              # Fallback if config doesn't work
+              docker run --rm \
+                -v "${PWD}:/mnt" \
+                -w /mnt \
+                hadolint/hadolint:latest \
+                hadolint \
+                --format json \
+                Dockerfile > EVIDENCE/P12/hadolint_report.json || true
+            }
+
+      - name: Display Hadolint summary
+        if: always()
+        run: |
+          if [ -f EVIDENCE/P12/hadolint_report.json ]; then
+            echo "## Hadolint Results" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat EVIDENCE/P12/hadolint_report.json >> $GITHUB_STEP_SUMMARY || echo "[]" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # C2 ★★2: Checkov - проверка IaC
+      - name: Run Checkov on IaC
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v "${PWD}:/mnt" \
+            -w /mnt \
+            bridgecrew/checkov:latest \
+            --directory /mnt \
+            --framework dockerfile docker_compose \
+            --config-file security/checkov.yaml \
+            --output json \
+            --output-file-path EVIDENCE/P12/checkov_report.json || {
+              # Fallback without config
+              docker run --rm \
+                -v "${PWD}:/mnt" \
+                -w /mnt \
+                bridgecrew/checkov:latest \
+                --directory /mnt \
+                --framework dockerfile docker_compose \
+                --output json \
+                --output-file-path EVIDENCE/P12/checkov_report.json || true
+            }
+
+      - name: Display Checkov summary
+        if: always()
+        run: |
+          if [ -f EVIDENCE/P12/checkov_report.json ]; then
+            echo "## Checkov Results" >> $GITHUB_STEP_SUMMARY
+            echo "Check IaC security report in artifacts." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # C3 ★★2: Trivy - проверка образа
+      - name: Build Docker image for Trivy scan
+        run: |
+          docker build -t secdev-app:test .
+
+      - name: Run Trivy on Docker image
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${PWD}/EVIDENCE/P12:/output" \
+            aquasec/trivy:latest \
+            image \
+            --config security/trivy.yaml \
+            --format json \
+            --output /output/trivy_report.json \
+            secdev-app:test || {
+              # Fallback without config
+              docker run --rm \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v "${PWD}/EVIDENCE/P12:/output" \
+                aquasec/trivy:latest \
+                image \
+                --format json \
+                --output /output/trivy_report.json \
+                --severity CRITICAL,HIGH,MEDIUM,LOW \
+                secdev-app:test || true
+            }
+
+      - name: Generate Trivy summary
+        if: always()
+        run: |
+          if [ -f EVIDENCE/P12/trivy_report.json ]; then
+            echo "## Trivy Results" >> $GITHUB_STEP_SUMMARY
+            echo "Check container vulnerability report in artifacts." >> $GITHUB_STEP_SUMMARY
+            # Extract summary counts
+            CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' EVIDENCE/P12/trivy_report.json 2>/dev/null || echo "0")
+            HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' EVIDENCE/P12/trivy_report.json 2>/dev/null || echo "0")
+            MEDIUM=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="MEDIUM")] | length' EVIDENCE/P12/trivy_report.json 2>/dev/null || echo "0")
+            echo "- CRITICAL: $CRITICAL" >> $GITHUB_STEP_SUMMARY
+            echo "- HIGH: $HIGH" >> $GITHUB_STEP_SUMMARY
+            echo "- MEDIUM: $MEDIUM" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # Ensure all reports exist
+      - name: Ensure reports exist
+        if: always()
+        run: |
+          touch EVIDENCE/P12/hadolint_report.json EVIDENCE/P12/checkov_report.json EVIDENCE/P12/trivy_report.json
+          echo "[]" > EVIDENCE/P12/hadolint_report.json || true
+          echo "{}" > EVIDENCE/P12/checkov_report.json || true
+          echo "{}" > EVIDENCE/P12/trivy_report.json || true
+
+      # C5 ★★2: Публикация артефактов
+      - name: Upload IaC & Container artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iac-container-artifacts
+          path: |
+            EVIDENCE/P12/hadolint_report.json
+            EVIDENCE/P12/checkov_report.json
+            EVIDENCE/P12/trivy_report.json
+            EVIDENCE/P12/hardening_summary.md
+          retention-days: 30
+

@@ -1,0 +1,37 @@
+# Hadolint configuration for P12
+# Custom rules configuration for Dockerfile linting
+
+# Ignore rules that are not relevant for our use case
+ignored:
+  # We use multi-stage builds intentionally
+  - DL3006
+  # We copy from build stage explicitly
+  - DL3009
+  # We use slim images which may not have all tools
+  - DL3008
+  # We intentionally use specific Python version
+  - DL3007
+
+# Trusted registries (if needed)
+trustedRegistries:
+  - docker.io
+  - python
+
+# Override severity for specific rules
+override:
+  error:
+    # Critical security issues
+    - DL3002  # Last user should not be root
+    - DL3003  # Use WORKDIR to switch to a directory
+    - DL3004  # Do not use sudo as it leads to unpredictable behavior
+    - DL3005  # Do not use apt-get upgrade or dist-upgrade
+  warning:
+    # Important but not critical
+    - DL3006  # Always tag the version of an image explicitly
+    - DL3008  # Pin versions in apt-get install
+    - DL3015  # Avoid additional packages by using --no-install-recommends
+  info:
+    # Informational
+    - DL3007  # Using latest is prone to errors if the image will ever update
+    - DL3009  # Delete the apt-get lists after installing something
+

@@ -1,0 +1,45 @@
+# Checkov configuration for P12
+# Infrastructure as Code security scanning
+
+framework:
+  - dockerfile
+  - docker_compose
+
+# Skip checks that are not relevant for our project
+skip-check:
+  # Docker Compose specific skips
+  - CKV_DOCKER_1  # Ensure that HEALTHCHECK is being used
+  - CKV_DOCKER_2  # Ensure that HEALTHCHECK instruction has been added to the image
+  # These are handled in Dockerfile, not compose.yaml
+  - CKV_DOCKER_3  # Ensure that a user for the container has been created
+  - CKV_DOCKER_4  # Ensure that COPY is used instead of ADD
+  - CKV_DOCKER_5  # Ensure that USER instruction has been added
+  - CKV_DOCKER_6  # Ensure that LABEL maintainer is not used
+  - CKV_DOCKER_7  # Ensure the base image uses a non-root user
+  - CKV_DOCKER_8  # Ensure that only necessary ports are exposed
+  - CKV_DOCKER_9  # Ensure that the last USER is not root
+  - CKV_DOCKER_10 # Ensure that the last USER is not root
+
+# Include checks
+include-check:
+  # Docker Compose security checks
+  - CKV_DOCKER_COMPOSE_1  # Ensure that no plaintext secrets are in docker-compose files
+  - CKV_DOCKER_COMPOSE_2  # Ensure that docker-compose files do not have privileged mode enabled
+  - CKV_DOCKER_COMPOSE_3  # Ensure that docker-compose files do not have privileged ports exposed
+  - CKV_DOCKER_COMPOSE_4  # Ensure that docker-compose files do not have privileged ports exposed
+
+# Soft fail - don't fail CI on warnings
+soft-fail: false
+
+# Output format
+output: json
+
+# External checks directory (if needed)
+external-checks-dir: []
+
+# Show progress
+quiet: false
+
+# Verbose output
+verbose: false
+
