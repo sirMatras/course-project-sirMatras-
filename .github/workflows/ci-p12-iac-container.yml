@@ -164,5 +164,6 @@ jobs:
             EVIDENCE/P12/checkov_report.json
             EVIDENCE/P12/trivy_report.json
             EVIDENCE/P12/hardening_summary.md
+            EVIDENCE/P12/README.md
           retention-days: 30
 
